@@ -95,6 +95,7 @@ namespace APP.Controllers
         [TempData]
         public string StatusMessage { set; get; }
 
+        [AcceptVerbs("POST","GET")]
         public IActionResult ViewProduct(int? id)
         {
             var product = _productService.Where(

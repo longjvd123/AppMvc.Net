@@ -1,5 +1,8 @@
+using System.Net;
+using App.ExtendMethods;
 using APP.Services;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Routing.Constraints;
 
 namespace APP
 {
@@ -19,7 +22,8 @@ namespace APP
             services.AddControllersWithViews();
             services.AddRazorPages();
             //services.AddTransient(typeof(ILogger<>), typeof(Logger<>));
-            services.Configure<RazorViewEngineOptions>(options => {
+            services.Configure<RazorViewEngineOptions>(options =>
+            {
                 // /View/Controller/Action.cshtml
                 // /MyView/Controller/Action.cshtml
 
@@ -33,6 +37,7 @@ namespace APP
             // services.AddSingleton<ProductService, ProductService>();
             // services.AddSingleton(typeof(ProductService));
             services.AddSingleton(typeof(ProductService), typeof(ProductService));
+            services.AddSingleton<PlanetServices>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -48,6 +53,7 @@ namespace APP
             }
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+            app.AddStatusCodePage(); // tuy bien response khi co loi
             app.UseRouting();
 
             app.UseAuthentication(); // xác định danh tính 
@@ -55,14 +61,36 @@ namespace APP
 
             app.UseEndpoints(endpoint =>
             {
+                endpoint.MapGet("/sayhi", async (context) =>
+                {
+                    await context.Response.WriteAsync($"Hello ASP.NET MVC {DateTime.Now}");
+                });
+
                 endpoint.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}"
+                    name:"First",
+                    pattern: "{url:regex(^((xemsanpham)|(viewproduct))$)}/{id:range(2,4)}",
+                    defaults: new{
+                        controller = "First",
+                        action = "ViewProduct"
+                    }
                 );
 
-                endpoint.MapRazorPages();
 
+                endpoint.MapControllerRoute(
+                    name: "default",
+                    pattern: "/{controller=Home}/{action=Index}/{id?}"
+                );
+
+                endpoint.MapAreaControllerRoute(
+                    name: "product",
+                    pattern: "/{controller=Product}/{action=Index}/{id?}",
+                    areaName: "ProductManage"
+                );
+                endpoint.MapRazorPages();
             });
         }
     }
 }
+// dotnet aspnet-codegenerator controller -name LearnAsp -outDir Controllers
+// dotnet aspnet-codegenerator view Index Empty -outDir Views/LearnAsp -l _Layout -f
+// dotnet aspnet-codegenerator area Product
